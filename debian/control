@@ -1,0 +1,21 @@
+Source: chaosread
+Section: utils
+Priority: optional
+Maintainer: Keith Packard <keithp@keithp.com>
+Build-Depends: debhelper (>= 9),
+	dh-autoreconf,
+	pkg-config,
+	libusb-1.0-0-dev,
+	autotools-dev
+Standards-Version: 4.0.0
+Homepage: http://chaoskey.org
+
+Package: chaosread
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Pre-Depends: ${misc:Pre-Depends}
+Description: Directly read ChaosKey noise source
+ ChaosKey provides a whitened source which the kernel driver uses as
+ the source of random numbers. It also provides access to the raw
+ noise source as a separate USB endpoint. ChaosRead provides access to
+ that raw endpoint.
