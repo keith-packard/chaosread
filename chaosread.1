@@ -33,6 +33,13 @@ one found.
 \-l length | --length length
 Set the amount of data to read. Suffixes 'k', 'M' and 'G' are
 supported. The default is 1k.
+.TP
+\-i | --infinite
+Keep reading forever (or until the process is killed).
+.TP
+\-b | --bytes
+Read 16-bits little endian values and write out one byte per sample
+from bits 1-8 of the sample (zero-based, so shift right by one).
 .SH USAGE
 .I chaosread
 reads noise data.
