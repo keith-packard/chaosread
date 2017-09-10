@@ -278,8 +278,17 @@ main (int argc, char **argv)
 			int i;
 			for (i = 0; i < got / 2; i++)
 				putchar((buf[i] >> 1 & 0xff));
-		} else
-			write(1, buf, got);
+		} else {
+			int i;
+			int ret;
+			for (i = 0; i < got; i += ret) {
+				ret = write(1, ((char *) buf) + i, got - i);
+				if (ret <= 0) {
+					perror("write");
+					exit(1);
+				}
+			}
+		}
 		length -= got;
 	}
 	exit(0);
