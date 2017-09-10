@@ -195,6 +195,7 @@ chaoskey_read(struct chaoskey *ck, void *buffer, int len)
 		}
 		len -= transferred;
 		buf += transferred;
+		total += transferred;
 	}
 	return total;
 }
