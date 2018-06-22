@@ -172,10 +172,12 @@ chaoskey_close(struct chaoskey *ck)
 	free(ck);
 }
 
-#define ENDPOINT	0x86
+#define COOKED_ENDPOINT	0x85
+#define RAW_ENDPOINT	0x86
+#define FLASH_ENDPOINT	0x87
 
 int
-chaoskey_read(struct chaoskey *ck, void *buffer, int len)
+chaoskey_read(struct chaoskey *ck, int endpoint, void *buffer, int len)
 {
 	uint8_t	*buf = buffer;
 	int	total = 0;
@@ -184,7 +186,7 @@ chaoskey_read(struct chaoskey *ck, void *buffer, int len)
 		int	ret;
 		int	transferred;
 
-		ret = libusb_bulk_transfer(ck->handle, ENDPOINT, buf, len, &transferred, 10000);
+		ret = libusb_bulk_transfer(ck->handle, endpoint, buf, len, &transferred, 10000);
 		if (ret) {
 			if (total)
 				return total;
@@ -205,12 +207,15 @@ static const struct option options[] = {
 	{ .name = "length", .has_arg = 1, .val = 'l' },
 	{ .name = "infinite", .has_arg = 0, .val = 'i' },
 	{ .name = "bytes", .has_arg = 0, .val = 'b' },
+	{ .name = "cooked", .has_arg = 0, .val = 'c' },
+	{ .name = "raw", .has_arg = 0, .val = 'r' },
+	{ .name = "flash", .has_arg = 0, .val = 'f' },
 	{ 0, 0, 0, 0},
 };
 
 static void usage(char *program)
 {
-	fprintf(stderr, "usage: %s [--serial=<serial>] [--length=<length>[kMG]] [--infinite] [--bytes]\n", program);
+	fprintf(stderr, "usage: %s [--serial=<serial>] [--length=<length>[kMG]] [--infinite] [--bytes] [--cooked] [--raw] [--flash]\n", program);
 	exit(1);
 }
 
@@ -228,8 +233,9 @@ main (int argc, char **argv)
 	int	this_time;
 	int	infinite = 0;
 	int	bytes = 0;
+	int	endpoint = RAW_ENDPOINT;
 
-	while ((c = getopt_long(argc, argv, "s:l:ib", options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "s:l:ibcrf", options, NULL)) != -1) {
 		switch (c) {
 		case 's':
 			serial = optarg;
@@ -252,6 +258,15 @@ main (int argc, char **argv)
 		case 'b':
 			bytes = 1;
 			break;
+		case 'c':
+			endpoint = COOKED_ENDPOINT;
+			break;
+		case 'r':
+			endpoint = RAW_ENDPOINT;
+			break;
+		case 'f':
+			endpoint = FLASH_ENDPOINT;
+			break;
 		default:
 			usage(argv[0]);
 			break;
@@ -269,7 +284,7 @@ main (int argc, char **argv)
 		this_time = sizeof(buf);
 		if (!infinite && length < sizeof(buf))
 			this_time = (int) length;
-		got = chaoskey_read(ck, buf, this_time);
+		got = chaoskey_read(ck, endpoint, buf, this_time);
 		if (got < 0) {
 			perror("read");
 			exit(1);
