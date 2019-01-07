@@ -31,6 +31,9 @@ AC_PROG_CC
 AC_PROG_INSTALL
 PKG_PROG_PKG_CONFIG
 
+WARN_CFLAGS="-Wall -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs"
+AC_SUBST(WARN_CFLAGS)
+
 PKG_CHECK_MODULES([LIBUSB], [libusb-1.0])
 
 AC_OUTPUT([

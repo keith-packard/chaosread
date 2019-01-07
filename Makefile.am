@@ -1,6 +1,6 @@
 bin_PROGRAMS=chaosread
 
-AM_CFLAGS=$(LIBUSB_CFLAGS) -Wall -Wextra
+AM_CFLAGS=$(LIBUSB_CFLAGS) $(WARN_CFLAGS)
 
 chaosread_LDADD=$(LIBUSB_LIBS)
 
