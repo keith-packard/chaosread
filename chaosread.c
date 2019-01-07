@@ -36,7 +36,7 @@ struct chaoskey {
 	int			kernel_active;
 };
 
-libusb_device_handle *
+static libusb_device_handle *
 chaoskey_match(libusb_device *dev, char *match_serial)
 {
 	struct libusb_device_descriptor desc;
@@ -96,7 +96,7 @@ out:
 	return 0;
 }
 
-struct chaoskey *
+static struct chaoskey *
 chaoskey_open(char *serial)
 {
 	struct chaoskey	*ck;
@@ -155,13 +155,15 @@ chaoskey_open(char *serial)
 out:
 	if (ck->kernel_active)
 		libusb_attach_kernel_driver(ck->handle, 0);
+	if (ck->handle)
+		libusb_close(ck->handle);
 	if (ck->ctx)
 		libusb_exit(ck->ctx);
 	free(ck);
 	return NULL;
 }
 
-void
+static void
 chaoskey_close(struct chaoskey *ck)
 {
 	libusb_release_interface(ck->handle, 0);
@@ -176,7 +178,7 @@ chaoskey_close(struct chaoskey *ck)
 #define RAW_ENDPOINT	0x86
 #define FLASH_ENDPOINT	0x87
 
-int
+static int
 chaoskey_read(struct chaoskey *ck, int endpoint, void *buffer, int len)
 {
 	uint8_t	*buf = buffer;
@@ -217,6 +219,13 @@ static void usage(char *program)
 {
 	fprintf(stderr, "usage: %s [--serial=<serial>] [--length=<length>[kMG]] [--infinite] [--bytes] [--cooked] [--raw] [--flash]\n", program);
 	exit(1);
+}
+
+static void
+finish(struct chaoskey *ck, int code)
+{
+	chaoskey_close(ck);
+	exit(code);
 }
 
 int
@@ -287,7 +296,7 @@ main (int argc, char **argv)
 		got = chaoskey_read(ck, endpoint, buf, this_time);
 		if (got < 0) {
 			perror("read");
-			exit(1);
+			finish(ck, 1);
 		}
 		if (bytes) {
 			int i;
@@ -300,11 +309,11 @@ main (int argc, char **argv)
 				ret = write(1, ((char *) buf) + i, got - i);
 				if (ret <= 0) {
 					perror("write");
-					exit(1);
+					finish(ck, 1);
 				}
 			}
 		}
 		length -= got;
 	}
-	exit(0);
+	finish(ck, 0);
 }
