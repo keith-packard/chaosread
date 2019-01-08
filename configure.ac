@@ -16,16 +16,17 @@ dnl  with this program; if not, write to the Free Software Foundation, Inc.,
 dnl  59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
 dnl
 dnl Process this file with autoconf to create configure.
+
 AC_PREREQ(2.57)
-AC_INIT([chaosread], 1.0)
+AC_INIT([chaosread], 1.1)
 AC_CONFIG_SRCDIR([chaosread.c])
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
 
-RELEASE_DATE=2017-09-06
-AC_SUBST(RELEASE_DATE)
+RELEASE_DATE=2019-01-07
 
-VERSION_DASH=`echo $VERSION | sed 's/\./-/g'`
-AC_SUBST(VERSION_DASH)
+AC_CONFIG_HEADERS(config.h)
+
+AC_DEFINE_UNQUOTED(RELEASE_DATE, "$RELEASE_DATE", [Release date])
 
 AC_PROG_CC
 AC_PROG_INSTALL

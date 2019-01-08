@@ -24,6 +24,7 @@
 #include <getopt.h>
 #include <string.h>
 #include <strings.h>
+#include "config.h"
 
 #define CHAOS_SIZE	64
 
@@ -212,13 +213,15 @@ static const struct option options[] = {
 	{ .name = "cooked", .has_arg = 0, .val = 'c' },
 	{ .name = "raw", .has_arg = 0, .val = 'r' },
 	{ .name = "flash", .has_arg = 0, .val = 'f' },
+	{ .name = "version", .has_arg = 0, .val = 'V' },
+	{ .name = "help", .has_arg = 0, .val = '?' },
 	{ 0, 0, 0, 0},
 };
 
-static void usage(char *program)
+static void usage(char *program, int code)
 {
-	fprintf(stderr, "usage: %s [--serial=<serial>] [--length=<length>[kMG]] [--infinite] [--bytes] [--cooked] [--raw] [--flash]\n", program);
-	exit(1);
+	fprintf(stderr, "usage: %s [--serial=<serial>] [--length=<length>[kMG]] [--infinite] [--bytes] [--cooked] [--raw] [--flash] [ --version] [--help]\n", program);
+	exit(code);
 }
 
 static void
@@ -244,7 +247,7 @@ main (int argc, char **argv)
 	int	bytes = 0;
 	int	endpoint = RAW_ENDPOINT;
 
-	while ((c = getopt_long(argc, argv, "s:l:ibcrf", options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "s:l:ibcrfV?", options, NULL)) != -1) {
 		switch (c) {
 		case 's':
 			serial = optarg;
@@ -259,7 +262,7 @@ main (int argc, char **argv)
 			else if (!strcasecmp(length_end, "g"))
 				length *= 1024 * 1024 * 1024;
 			else if (strlen(length_end))
-				 usage(argv[0]);
+				usage(argv[0], 1);
 			break;
 		case 'i':
 			infinite = 1;
@@ -276,8 +279,14 @@ main (int argc, char **argv)
 		case 'f':
 			endpoint = FLASH_ENDPOINT;
 			break;
+		case 'V':
+			printf("%s %s (%s)\n", PACKAGE, VERSION, RELEASE_DATE);
+			exit(0);
+		case '?':
+			usage(argv[0], 0);
+			break;
 		default:
-			usage(argv[0]);
+			usage(argv[0], 1);
 			break;
 		}
 	}
