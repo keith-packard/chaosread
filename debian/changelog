@@ -1,3 +1,10 @@
+chaosread (1.1-1) unstable; urgency=medium
+
+  * Re-enable kernel driver on exit.
+  * Add --version and --help flags
+
+ -- Keith Packard <keithp@keithp.com>  Mon, 07 Jan 2019 16:14:06 -0800
+
 chaosread (1.0-1) unstable; urgency=medium
 
   * Initial release
