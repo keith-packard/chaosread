@@ -24,6 +24,7 @@
 #include <getopt.h>
 #include <string.h>
 #include <strings.h>
+#include "config.h"
 
 #define CHAOS_SIZE	64
 
@@ -36,7 +37,7 @@ struct chaoskey {
 	int			kernel_active;
 };
 
-libusb_device_handle *
+static libusb_device_handle *
 chaoskey_match(libusb_device *dev, char *match_serial)
 {
 	struct libusb_device_descriptor desc;
@@ -96,7 +97,7 @@ out:
 	return 0;
 }
 
-struct chaoskey *
+static struct chaoskey *
 chaoskey_open(char *serial)
 {
 	struct chaoskey	*ck;
@@ -155,13 +156,15 @@ chaoskey_open(char *serial)
 out:
 	if (ck->kernel_active)
 		libusb_attach_kernel_driver(ck->handle, 0);
+	if (ck->handle)
+		libusb_close(ck->handle);
 	if (ck->ctx)
 		libusb_exit(ck->ctx);
 	free(ck);
 	return NULL;
 }
 
-void
+static void
 chaoskey_close(struct chaoskey *ck)
 {
 	libusb_release_interface(ck->handle, 0);
@@ -172,10 +175,12 @@ chaoskey_close(struct chaoskey *ck)
 	free(ck);
 }
 
-#define ENDPOINT	0x86
+#define COOKED_ENDPOINT	0x85
+#define RAW_ENDPOINT	0x86
+#define FLASH_ENDPOINT	0x87
 
-int
-chaoskey_read(struct chaoskey *ck, void *buffer, int len)
+static int
+chaoskey_read(struct chaoskey *ck, int endpoint, void *buffer, int len)
 {
 	uint8_t	*buf = buffer;
 	int	total = 0;
@@ -184,7 +189,7 @@ chaoskey_read(struct chaoskey *ck, void *buffer, int len)
 		int	ret;
 		int	transferred;
 
-		ret = libusb_bulk_transfer(ck->handle, ENDPOINT, buf, len, &transferred, 10000);
+		ret = libusb_bulk_transfer(ck->handle, endpoint, buf, len, &transferred, 10000);
 		if (ret) {
 			if (total)
 				return total;
@@ -205,13 +210,25 @@ static const struct option options[] = {
 	{ .name = "length", .has_arg = 1, .val = 'l' },
 	{ .name = "infinite", .has_arg = 0, .val = 'i' },
 	{ .name = "bytes", .has_arg = 0, .val = 'b' },
+	{ .name = "cooked", .has_arg = 0, .val = 'c' },
+	{ .name = "raw", .has_arg = 0, .val = 'r' },
+	{ .name = "flash", .has_arg = 0, .val = 'f' },
+	{ .name = "version", .has_arg = 0, .val = 'V' },
+	{ .name = "help", .has_arg = 0, .val = '?' },
 	{ 0, 0, 0, 0},
 };
 
-static void usage(char *program)
+static void usage(char *program, int code)
 {
-	fprintf(stderr, "usage: %s [--serial=<serial>] [--length=<length>[kMG]] [--infinite] [--bytes]\n", program);
-	exit(1);
+	fprintf(stderr, "usage: %s [--serial=<serial>] [--length=<length>[kMG]] [--infinite] [--bytes] [--cooked] [--raw] [--flash] [ --version] [--help]\n", program);
+	exit(code);
+}
+
+static void
+finish(struct chaoskey *ck, int code)
+{
+	chaoskey_close(ck);
+	exit(code);
 }
 
 int
@@ -228,8 +245,9 @@ main (int argc, char **argv)
 	int	this_time;
 	int	infinite = 0;
 	int	bytes = 0;
+	int	endpoint = RAW_ENDPOINT;
 
-	while ((c = getopt_long(argc, argv, "s:l:ib", options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "s:l:ibcrfV?", options, NULL)) != -1) {
 		switch (c) {
 		case 's':
 			serial = optarg;
@@ -244,7 +262,7 @@ main (int argc, char **argv)
 			else if (!strcasecmp(length_end, "g"))
 				length *= 1024 * 1024 * 1024;
 			else if (strlen(length_end))
-				 usage(argv[0]);
+				usage(argv[0], 1);
 			break;
 		case 'i':
 			infinite = 1;
@@ -252,8 +270,23 @@ main (int argc, char **argv)
 		case 'b':
 			bytes = 1;
 			break;
+		case 'c':
+			endpoint = COOKED_ENDPOINT;
+			break;
+		case 'r':
+			endpoint = RAW_ENDPOINT;
+			break;
+		case 'f':
+			endpoint = FLASH_ENDPOINT;
+			break;
+		case 'V':
+			printf("%s %s (%s)\n", PACKAGE, VERSION, RELEASE_DATE);
+			exit(0);
+		case '?':
+			usage(argv[0], 0);
+			break;
 		default:
-			usage(argv[0]);
+			usage(argv[0], 1);
 			break;
 		}
 	}
@@ -269,10 +302,10 @@ main (int argc, char **argv)
 		this_time = sizeof(buf);
 		if (!infinite && length < sizeof(buf))
 			this_time = (int) length;
-		got = chaoskey_read(ck, buf, this_time);
+		got = chaoskey_read(ck, endpoint, buf, this_time);
 		if (got < 0) {
 			perror("read");
-			exit(1);
+			finish(ck, 1);
 		}
 		if (bytes) {
 			int i;
@@ -285,11 +318,11 @@ main (int argc, char **argv)
 				ret = write(1, ((char *) buf) + i, got - i);
 				if (ret <= 0) {
 					perror("write");
-					exit(1);
+					finish(ck, 1);
 				}
 			}
 		}
 		length -= got;
 	}
-	exit(0);
+	finish(ck, 0);
 }

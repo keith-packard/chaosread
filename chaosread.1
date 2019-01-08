@@ -40,6 +40,19 @@ Keep reading forever (or until the process is killed).
 \-b | --bytes
 Read 16-bits little endian values and write out one byte per sample
 from bits 1-8 of the sample (zero-based, so shift right by one).
+.TP
+\-b | --cooked
+Read values from the 'cooked' endpoint, which is the source used by
+the kernel driver that contains trimmed and whitened data which has 8
+bits of entropy per byte.
+.TP
+\-b | --raw
+Read from the raw RNG source endpoint, which is best for testing the
+hardware on the device. This is the default
+.TP
+\-b | --firmware
+Read from the device firmware. This can be used to verify that the
+firmware in the device has the expected contents.
 .SH USAGE
 .I chaosread
 reads noise data.
