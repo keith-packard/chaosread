@@ -2,12 +2,10 @@ Source: chaosread
 Section: utils
 Priority: optional
 Maintainer: Keith Packard <keithp@keithp.com>
-Build-Depends: debhelper (>= 9),
-	dh-autoreconf,
+Build-Depends: debhelper (>= 12),
 	pkg-config,
-	libusb-1.0-0-dev,
-	autotools-dev
-Standards-Version: 4.0.0
+	libusb-1.0-0-dev
+Standards-Version: 4.3.0
 Homepage: http://chaoskey.org
 
 Package: chaosread
