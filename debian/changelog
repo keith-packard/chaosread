@@ -1,3 +1,9 @@
+chaosread (1.1-2) unstable; urgency=medium
+
+  * Fix some lintian errors.
+
+ -- Keith Packard <keithp@keithp.com>  Sat, 09 Mar 2019 11:20:49 +0100
+
 chaosread (1.1-1) unstable; urgency=medium
 
   * Re-enable kernel driver on exit.
